@@ -1,0 +1,56 @@
+$ryu_webui_script = <<SCRIPT
+ryu-manager --observe-links \
+    /home/vagrant/ryu/ryu/app/gui_topology/gui_topology.py \
+    /home/vagrant/ryu/ryu/app/simple_switch_websocket_13.py
+SCRIPT
+
+$add_route_h2_script = <<SCRIPT
+sudo route add -net 192.168.2.0 netmask 255.255.255.0 dev eth1
+SCRIPT
+
+$add_route_h1_script = <<SCRIPT
+sudo route add -net 192.168.1.0 netmask 255.255.255.0 dev eth1
+SCRIPT
+
+Vagrant.configure("2") do |config|
+    config.vm.define "ryu" do |ryu|
+        ryu.vm.box = "ubuntu/trusty64"
+        # add forwarding port to access Ryu web UI from host
+        ryu.vm.network "forwarded_port", guest: 8080, host: 8080
+        ryu.vm.network "private_network", ip: "192.168.33.33", virtualbox__intnet: "LANs1"
+        ryu.vm.provider :virtualbox do |vb|
+            # adjust system memory to 1024 MB
+            vb.memory = 1024
+        end
+        ryu.vm.provision "ryusetup", type: "shell", path: "ryu_setup.sh"
+        ryu.vm.provision "ryuwebui", type: "shell", inline: $ryu_webui_script
+    end
+
+    config.vm.define "ovs" do |ovs|
+        ovs.vm.box = "ubuntu/trusty64"
+        ovs.vm.network "private_network", ip: "192.168.33.34", virtualbox__intnet: "LANs1"
+        ovs.vm.network "private_network", ip: "192.168.1.12", virtualbox__intnet: "LANs2"
+        ovs.vm.network "private_network", ip: "192.168.2.23", virtualbox__intnet: "LANs3"
+        ovs.vm.provider :virtualbox do |vb|
+            # adjust system memory to 1024 MB
+            vb.memory = 1024
+            # set promiscuous mode to allow all at two adapters connecting to hosts
+            vb.customize ["modifyvm", :id, "--nicpromisc3", "allow-all"]
+            vb.customize ["modifyvm", :id, "--nicpromisc4", "allow-all"]
+        end
+        ovs.vm.provision "ovssetup", type: "shell", path: "ovs_setup.sh"
+        ovs.vm.provision "ovsconfig", type: "shell", path: "ovs_config.sh" 
+    end
+
+    config.vm.define "host1" do |host1|
+        host1.vm.box = "ubuntu/trusty64"
+        host1.vm.network "private_network", ip: "192.168.1.11", virtualbox__intnet: "LANs2"
+        host1.vm.provision "addrouteh2", type: "shell", inline: $add_route_h2_script
+    end
+
+    config.vm.define "host2" do |host2|
+        host2.vm.box = "ubuntu/trusty64"
+        host2.vm.network "private_network", ip: "192.168.2.22", virtualbox__intnet: "LANs3"
+        host2.vm.provision "addrouteh1", type: "shell", inline: $add_route_h1_script
+    end
+end

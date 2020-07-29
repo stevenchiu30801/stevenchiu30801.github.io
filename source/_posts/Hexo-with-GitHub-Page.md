@@ -6,6 +6,8 @@ tags:
     - Setup
 ---
 
+My original blog is written with [Octopress](http://octopress.org/) and then I migrated to [Hexo](https://hexo.io/). This post guides one to build up a blog with Hexo. <!-- more -->
+
 # Prerequisite
 
 - [NodeJS](https://nodejs.org/en/)
