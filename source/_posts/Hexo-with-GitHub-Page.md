@@ -85,8 +85,8 @@ npm install hexo-cli -g
 
 # My Configuration
 
-- [Hexo](https://github.com/stevenchiu30801/stevenchiu30801.github.io/blob/master/themes/next/_config.yml)
-- [NexT Theme](https://github.com/stevenchiu30801/stevenchiu30801.github.io/blob/master/_config.yml)
+- [Hexo](https://github.com/stevenchiu30801/stevenchiu30801.github.io/blob/source/_config.yml)
+- [NexT Theme](https://github.com/stevenchiu30801/stevenchiu30801.github.io/blob/source/themes/_config_next.yml)
 
 
 # Reference
