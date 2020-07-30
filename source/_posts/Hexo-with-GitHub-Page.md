@@ -3,10 +3,9 @@ title: Hexo with GitHub Page
 date: 2020-07-29 11:55:45
 tags:
     - Hexo
-    - Setup
 ---
 
-My original blog is written with [Octopress](http://octopress.org/) and then I migrated to [Hexo](https://hexo.io/). This post guides one to build up a blog with Hexo. <!-- more -->
+My original blog has been written with [Octopress](http://octopress.org/) and then I migrated to [Hexo](https://hexo.io/). This post guides one to build up a blog with Hexo. <!-- more -->
 
 # Prerequisite
 
