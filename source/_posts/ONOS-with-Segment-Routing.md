@@ -2,8 +2,8 @@
 title: ONOS with Segment Routing
 date: 2018-05-26 21:09:39
 tags:
-    - SDN
     - ONOS
+    - SDN
 ---
 
 This tutorial is to run Segment Routing application in ONOS on a 2x2 leaf-spine topology built with Mininet. <!-- more -->

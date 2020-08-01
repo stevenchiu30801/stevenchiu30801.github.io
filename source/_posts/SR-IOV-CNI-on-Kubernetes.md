@@ -229,8 +229,8 @@ Please refer to [GitHub - intel/sriov-network-device-plugin](https://github.com/
             "resourceList": [{
                     "resourceName": "intel_sriov",
                     "selectors": {
-                                            "vendors": ["8086"],
-                                            "devices": ["1521"],
+                        "vendors": ["8086"],
+                        "devices": ["1521"],
                         "pfName": ["enp1s0f0"]
                     }
                 }

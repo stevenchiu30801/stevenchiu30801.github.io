@@ -2,8 +2,8 @@
 title: Use Open vSwitch as OpenFlow Switch
 date: 2018-04-14 19:35:11
 tags:
-    - SDN
     - OvS
+    - SDN
 ---
 
 This is the second experiment in the course Software-Defined Network at NCTU. The requirement is to use virtual machine to build a simple topology with an OpenFlow switch emulated by Open vSwitch. <!-- more -->
