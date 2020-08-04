@@ -118,6 +118,7 @@ darkmode: false
 menu:
   home: / || fa fa-home
   about: /about/ || fa fa-user
+  project: /project/ || fa fa-code
   tags: /tags/ || fa fa-tags
   #categories: /categories/ || fa fa-th
   archives: /archives/ || fa fa-archive
