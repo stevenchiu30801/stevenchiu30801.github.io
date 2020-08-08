@@ -26,10 +26,10 @@ The MANO framework adopts all open-source approaches.
 
 - Kubernetes and Operator pattern as container and service orchestrator
 - free5GC, which is containerized and deployed on Kubernetes, as 5G core network
+  <center>
+  {% img /images/project/cn_slicing.png 700 %}
+  </center>
 - Open Network Operating System (ONOS) as the Software-Defined Networking (SDN) controller and P4 switches as the data plane.
-
-The following figure showcases the procedure of E2E NS on-boarding.
-
-<center>
-{% img /images/project/e2e_ns_procedure.svg %}
-</center>
+  <center>
+  {% img /images/project/tn_slicing.png 700 %}
+  </center>
