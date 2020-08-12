@@ -60,13 +60,10 @@ Each nodes could reach others using `ping` (ICMP)
 
 However, TCP packets from Container 1 could not reach both Container 2 and outside host (say Host 2)
 
-Packets from Container 1 would be dropped on Host 2
-
 The checksum in TCP packets was found corrupted
 
-If disabled DPDK, everything works
-
-If disabled Tx/Rx Offloading on Container 1, everything works
+- If disabled DPDK, everything works
+- If disabled Tx/Rx Offloading on Container 1, everything works
 
 ## Root Cause
 
@@ -80,7 +77,7 @@ Actually, there are some conflicts between the discovered root cause of Case 2 a
 
 ## Incident
 
-{% img /images/invalid-checksum-issues/case3.png %}
+{% img /images/invalid-checksum-issues/case3.png 600 %}
 
 TCP Packets could not be transmitted between Instance A and B
 
