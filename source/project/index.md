@@ -31,5 +31,5 @@ The MANO framework adopts all open-source approaches.
   </center>
 - Open Network Operating System (ONOS) as the Software-Defined Networking (SDN) controller and P4 switches as the data plane.
   <center>
-  {% img /images/project/tn_slicing.png 700 %}
+  {% img /images/project/tn_slicing.png 800 %}
   </center>
