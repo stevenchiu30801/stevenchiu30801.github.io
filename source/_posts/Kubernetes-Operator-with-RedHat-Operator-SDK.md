@@ -59,20 +59,6 @@ Please refer to [GitHub - Operator Framework](https://github.com/operator-framew
 
 5. Design the controller `pkg/controller/samplecr/samplecr_controller.go`
 
-    List of API reference
-
-    - [Sample `memcached_controller.go`](https://github.com/operator-framework/operator-sdk/blob/master/example/memcached-operator/memcached_controller.go.tmpl)
-    - [kubernetes-sigs/controller-runtime](https://github.com/kubernetes-sigs/controller-runtime)
-        - [Using the Controller Runtime Client API with Operator SDK](https://github.com/operator-framework/operator-sdk/blob/master/doc/user/client.md)
-    - [kubernetes/cli-runtime](https://github.com/kubernetes/cli-runtime)
-        - For Helm client to get Kubernetes client config
-        - [genericclioptions.AddFlags()](https://github.com/kubernetes/cli-runtime/blob/master/pkg/genericclioptions/config_flags.go#L255)
-            - Field explanation for genericclioptions.ConfigFlags
-    - [kubernetes/client-go#rest/config.go-rest.InClusterConfig()](https://github.com/kubernetes/client-go/blob/master/rest/config.go#L471)
-        - Config intended for clients that expect to be running inside a pod running on kubernetes
-    - [helm/helm#pkg](https://github.com/helm/helm/tree/master/pkg)
-        - [Samples on kubernetes helm golang client](https://stackoverflow.com/questions/45692719/samples-on-kubernetes-helm-golang-client)
-    - [Cluster-scoped operator usage](https://github.com/operator-framework/operator-sdk/blob/master/doc/operator-scope.md#cluster-scoped-operator-usage)
 6. Register CRD
 
     ```bash
@@ -110,15 +96,35 @@ Please refer to [GitHub - Operator Framework](https://github.com/operator-framew
 
 Some design logic of controller
 
-- Design control logic in view of single unit of reconciled object
-    - Don't think in the way of orchestrator or manager
-    - Since reconciled object would be requeue due to changes
+- Design control logic in the view of maintaining states of reconciled objects (custom resources)
+    - Don't think in the way of handling requests on orchestrator or manager
+    - Since reconciled object would be requeue due to changes of status
 - Try to not maintain soft state in operator
     - Store data in database or volume
     - Use Status to keep object states
-- Use finalizer to handle cleanup of external resources
+- Use finalizer to handle cleanup of external resources (resources created from Helm) or customize cleanup logic
+    - For resources allocated in Go objects, one could use [Controller Reference](https://github.com/stevenchiu30801/bans5gc-operator/blob/master/pkg/controller/bansslice/bansslice_controller.go#L322) to enable automated cleanup
 
 # Reference
+
+## Go API Package
+
+- [Sample `memcached_controller.go`](https://github.com/operator-framework/operator-sdk/blob/master/example/memcached-operator/memcached_controller.go.tmpl)
+- [kubernetes-sigs/controller-runtime](https://github.com/kubernetes-sigs/controller-runtime)
+    - Main API to design operators
+
+In my design case, I use Go Operator but have to deploy resources with Helm (Too many resources to deploy with Go objects)
+
+Here are some API references to do so and also refer to the [code](https://github.com/stevenchiu30801/free5gc-operator/blob/master/pkg/helm/helm.go)
+
+- [kubernetes/cli-runtime](https://github.com/kubernetes/cli-runtime)
+    - For Helm client to get Kubernetes client config
+    - [genericclioptions.AddFlags()](https://github.com/kubernetes/cli-runtime/blob/master/pkg/genericclioptions/config_flags.go#L255)
+        - Field explanation for genericclioptions.ConfigFlags
+- [kubernetes/client-go#rest/config.go-rest.InClusterConfig()](https://github.com/kubernetes/client-go/blob/master/rest/config.go#L471)
+    - Config intended for Kubernetes clients that expect to be running inside a pod
+- [helm/helm#pkg](https://github.com/helm/helm/tree/master/pkg)
+    - [Samples on kubernetes helm golang client](https://stackoverflow.com/questions/45692719/samples-on-kubernetes-helm-golang-client)
 
 ## Operator
 
@@ -137,3 +143,7 @@ Some design logic of controller
 
 - [Samples on kubernetes helm golang client](https://stackoverflow.com/questions/45692719/samples-on-kubernetes-helm-golang-client)
     - [For Helm 3](https://stackoverflow.com/a/60077666)
+
+# Update
+
+Operator SDK has its own [website](https://sdk.operatorframework.io/) and [documentation](https://sdk.operatorframework.io/docs/).
