@@ -176,7 +176,7 @@ Here are some points I got.
 The following picture shows labels of each flow in this practice.
 
 <center>
-{% img /images/onos-with-segment-routing/labels.png %}
+{% img /images/onos-with-segment-routing/labels.png 500 %}
 </center>
 
 ## Update

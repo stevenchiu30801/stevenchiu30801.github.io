@@ -132,7 +132,7 @@ Here are some API references to do so and also refer to the [code](https://githu
     - [operator-sdk#user-guide.md](https://github.com/operator-framework/operator-sdk/blob/master/doc/user-guide.md) - for Go operator
 - [operator-framework/operator-sdk-samples](https://github.com/operator-framework/operator-sdk-samples)
 
-### Finalizer
+## Finalizer
 
 - [Extend the Kubernetes API with CustomResourceDefinitions#Finalizers](https://kubernetes.io/docs/tasks/access-kubernetes-api/custom-resources/custom-resource-definitions/#finalizers)
 - [kubernetes-sigs/kuberbuilder#using_finalizers.md](https://github.com/kubernetes-sigs/kubebuilder/blob/master/docs/book/src/reference/using-finalizers.md)
