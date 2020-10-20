@@ -94,3 +94,9 @@ Note: 5GC also allows MEC (AF) to request information about UEs
 - Same UP session allows the UE to obtain content both from local server and central server
 - No impact on UE and service continuity in case of Uplink Classifier (UL CL) is used, or alternatively for PDU sessions using IPv6 or IPv4v6, Branching Point function with Multi-homing concept
 - Refer to clause 5.6.4 Single PDU Session with multiple PDU Session Anchors in 3GPP TS 23.501 V16.6.0
+
+# Reference
+
+- [ETSI GS MEC 003 V2.1.1 - Framework and Reference Architecture](https://www.etsi.org/deliver/etsi_gs/MEC/001_099/003/02.01.01_60/gs_MEC003v020101p.pdf)
+- [ETSI White Paper No. 28 - MEC in 5G Networks](https://www.etsi.org/images/files/ETSIWhitePapers/etsi_wp28_mec_in_5G_FINAL.pdf)
+- [ETSI MEC Overview Presentation](https://portal.etsi.org/Portals/0/TBpages/MEC/Docs/ETSI%20MEC%20Public%20Overview_Aug2020.pdf)
