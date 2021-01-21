@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh-tw">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"stevenchiu30801.github.io","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="This post is a note for integrating MEC in 5G networks.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MEC in 5G Networks">
+<meta property="og:url" content="https://stevenchiu30801.github.io/2020/10/15/MEC-in-5G-Networks/index.html">
+<meta property="og:site_name" content="Steven&#39;s Blog">
+<meta property="og:description" content="This post is a note for integrating MEC in 5G networks.">
+<meta property="og:locale" content="zh_TW">
+<meta property="og:image" content="https://stevenchiu30801.github.io/images/mec-in-5g-networks/reference_architecture.png">
+<meta property="og:image" content="https://stevenchiu30801.github.io/images/mec-in-5g-networks/mec_in_5g_networks.png">
+<meta property="og:image" content="https://stevenchiu30801.github.io/images/mec-in-5g-networks/selection_re-location_of_upf.png">
+<meta property="og:image" content="https://stevenchiu30801.github.io/images/mec-in-5g-networks/af_influence_on_traffic_routing.png">
+<meta property="og:image" content="https://stevenchiu30801.github.io/images/mec-in-5g-networks/mobility_event_notifications.png">
+<meta property="og:image" content="https://stevenchiu30801.github.io/images/mec-in-5g-networks/concurrent_access_to_local_and_central_dn.png">
+<meta property="article:published_time" content="2020-10-15T14:22:41.000Z">
+<meta property="article:modified_time" content="2021-01-12T12:05:16.313Z">
+<meta property="article:author" content="Steven Chiu">
+<meta property="article:tag" content="5G">
+<meta property="article:tag" content="MEC">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://stevenchiu30801.github.io/images/mec-in-5g-networks/reference_architecture.png">
+
+<link rel="canonical" href="https://stevenchiu30801.github.io/2020/10/15/MEC-in-5G-Networks/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-tw'
+  };
+</script>
+
+  <title>MEC in 5G Networks | Steven's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Steven's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-project">
+
+    <a href="/project/" rel="section"><i class="fa fa-code fa-fw"></i>project</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-tw">
+    <link itemprop="mainEntityOfPage" href="https://stevenchiu30801.github.io/2020/10/15/MEC-in-5G-Networks/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Steven Chiu">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Steven's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          MEC in 5G Networks
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-10-15 22:22:41" itemprop="dateCreated datePublished" datetime="2020-10-15T22:22:41+08:00">2020-10-15</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-01-12 20:05:16" itemprop="dateModified" datetime="2021-01-12T20:05:16+08:00">2021-01-12</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>This post is a note for integrating MEC in 5G networks. <a id="more"></a></p>
+<h1 id="Reference-Architecture"><a href="#Reference-Architecture" class="headerlink" title="Reference Architecture"></a>Reference Architecture</h1><center>
+<img src="/images/mec-in-5g-networks/reference_architecture.png" class="">
+</center>
+
+<h2 id="Architecture-Diagram"><a href="#Architecture-Diagram" class="headerlink" title="Architecture Diagram"></a>Architecture Diagram</h2><ul>
+<li>The MEC platform is deployed as a VNF<ul>
+<li>Consequently, the MEC platform should have it own lifecycle management</li>
+</ul>
+</li>
+<li>The MEC applications appear as VNFs towards the ETSI NFV MANO components</li>
+<li>The virtualization infrastructure is deployed as an NFVI and is managed by a VIM</li>
+<li>The MEC platform manager (MEPM) is replaced by a MEC platform manager - NFV (MEPM-V) that delegates the VNF lifecycle management to one or more VNF managers (VNFM)<ul>
+<li>In short, MEPM may be treated as VNFM in ETSI NFV-MANO</li>
+</ul>
+</li>
+<li>The MEC orchestrator (MEO) is replaced by a MEC application orchestrator (MEAO) that relies on the NFV orchestrator (NFVO) for resource orchestration and for orchestration of the set of MEC application VNFs as one or more NFV network services (NSs)<ul>
+<li>In short, MEO may be treated as NFVO in ETSI NFV-MANO</li>
+</ul>
+</li>
+</ul>
+<h2 id="MEC-Platform"><a href="#MEC-Platform" class="headerlink" title="MEC Platform"></a>MEC Platform</h2><ul>
+<li>Offer an environment where the MEC applications can discover, advertise, consume and offer MEC services</li>
+<li>Receive traffic rules from the MEC platform manager, applications, or services, and instructing the data plane accordingly. When supported, this includes the translation of tokens representing UEs in the traffic rules into specific IP addresses<ul>
+<li>The data plane may be UPFs in 5G core networks</li>
+</ul>
+</li>
+<li>Host MEC services</li>
+<li>Provide access to persistent storage and time of day information</li>
+</ul>
+<p>In my Opinion, the MEC platform, basically, is in charge of offering services (e.g. service registry, DNS handling or even providing radio network information, location services and bandwidth management) required by MEC applications and also controlling the traffic rules through the NEF-PCF-SMF route</p>
+<h2 id="MEC-Services"><a href="#MEC-Services" class="headerlink" title="MEC Services"></a>MEC Services</h2><ul>
+<li>A MEC service is a service provided and consumed either by the MEC platform or a MEC application<ul>
+<li>In microservice architecture, the MEC platform should be decoupled into several microservices</li>
+</ul>
+</li>
+<li>When provided by an application, it can be registered in the list of services to the MEC platform over the Mp1 reference point<ul>
+<li>Here comes into the service registry and such functionality is similar to NRF in 5G SBA</li>
+</ul>
+</li>
+</ul>
+<h1 id="MEC-in-5G-Networks"><a href="#MEC-in-5G-Networks" class="headerlink" title="MEC in 5G Networks"></a>MEC in 5G Networks</h1><center>
+<img src="/images/mec-in-5g-networks/mec_in_5g_networks.png" class="">
+</center>
+
+<h2 id="Selection-and-Re-location-of-UPF"><a href="#Selection-and-Re-location-of-UPF" class="headerlink" title="Selection and Re-location of UPF"></a>Selection and Re-location of UPF</h2><center>
+<img src="/images/mec-in-5g-networks/selection_re-location_of_upf.png" class="" width="600">
+</center>
+
+<ul>
+<li>The MEC platform, or MEPM and MEO, as an AF can request the 5GC to select a local UPF near the target (R)AN node</li>
+<li>The 5GC can re-select a new local UPF more suitable to handle application traffic identified by MEC (AF)<ul>
+<li>Based on UE mobility and connectivity related events received from the AMF and SMF</li>
+</ul>
+</li>
+<li>Refer to clause 5.6.7 Application Function influence on traffic routing in 3GPP TS 23.501 V16.6.0</li>
+</ul>
+<h2 id="AF-Influence-on-Traffic-Routing"><a href="#AF-Influence-on-Traffic-Routing" class="headerlink" title="AF Influence on Traffic Routing"></a>AF Influence on Traffic Routing</h2><center>
+<img src="/images/mec-in-5g-networks/af_influence_on_traffic_routing.png" class="" width="600">
+</center>
+
+<ul>
+<li>MEC as an AF can influence traffic steering based on a wide set of different parameters<ul>
+<li>information to identify the traffic (DNN, S-NSSAI, AF-Service-Identifier, 5 tuple, etc.)</li>
+<li>a reference ID to preconfigured routing information</li>
+<li>a list of DNAIs (Data Network Access Identifier)</li>
+<li>information about target UE(s)</li>
+<li>etc.</li>
+</ul>
+</li>
+<li>Refer to clause 5.6.7 Application Function influence on traffic routing in 3GPP TS 23.501 V16.6.0</li>
+</ul>
+<p>Note: 5GC also allows MEC (AF) to request information about UEs</p>
+<h2 id="Mobility-Event-Notifications"><a href="#Mobility-Event-Notifications" class="headerlink" title="Mobility Event Notifications"></a>Mobility Event Notifications</h2><center>
+<img src="/images/mec-in-5g-networks/mobility_event_notifications.png" class="" width="600">
+</center>
+
+<ul>
+<li>5GC allows MEC as an AF to<ul>
+<li>subscribe to UE mobility events that may affect traffic forwarding to MEC applications</li>
+<li>receive notifications of UE mobility events affecting MEC application instances</li>
+</ul>
+</li>
+</ul>
+<h2 id="Concurrent-Access-to-Local-and-Central-DN"><a href="#Concurrent-Access-to-Local-and-Central-DN" class="headerlink" title="Concurrent Access to Local and Central DN"></a>Concurrent Access to Local and Central DN</h2><center>
+<img src="/images/mec-in-5g-networks/concurrent_access_to_local_and_central_dn.png" class="" width="800">
+</center>
+
+<ul>
+<li>Same UP session allows the UE to obtain content both from local server and central server</li>
+<li>No impact on UE and service continuity in case of Uplink Classifier (UL CL) is used, or alternatively for PDU sessions using IPv6 or IPv4v6, Branching Point function with Multi-homing concept</li>
+<li>Refer to clause 5.6.4 Single PDU Session with multiple PDU Session Anchors in 3GPP TS 23.501 V16.6.0</li>
+</ul>
+<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ul>
+<li><a href="https://www.etsi.org/deliver/etsi_gs/MEC/001_099/003/02.01.01_60/gs_MEC003v020101p.pdf" target="_blank" rel="noopener">ETSI GS MEC 003 V2.1.1 - Framework and Reference Architecture</a></li>
+<li><a href="https://www.etsi.org/images/files/ETSIWhitePapers/etsi_wp28_mec_in_5G_FINAL.pdf" target="_blank" rel="noopener">ETSI White Paper No. 28 - MEC in 5G Networks</a></li>
+<li><a href="https://portal.etsi.org/Portals/0/TBpages/MEC/Docs/ETSI%20MEC%20Public%20Overview_Aug2020.pdf" target="_blank" rel="noopener">ETSI MEC Overview Presentation</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/5G/" rel="tag"># 5G</a>
+              <a href="/tags/MEC/" rel="tag"># MEC</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/10/06/Google%E6%A8%A1%E5%BC%8F/" rel="prev" title="Google模式">
+      <i class="fa fa-chevron-left"></i> Google模式
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/01/21/Periodically-Alarm-on-Windows-for-Eye-Relaxing/" rel="next" title="Alarm on Windows for Eye Relaxing">
+      Alarm on Windows for Eye Relaxing <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Reference-Architecture"><span class="nav-text">Reference Architecture</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Architecture-Diagram"><span class="nav-text">Architecture Diagram</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MEC-Platform"><span class="nav-text">MEC Platform</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MEC-Services"><span class="nav-text">MEC Services</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#MEC-in-5G-Networks"><span class="nav-text">MEC in 5G Networks</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Selection-and-Re-location-of-UPF"><span class="nav-text">Selection and Re-location of UPF</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#AF-Influence-on-Traffic-Routing"><span class="nav-text">AF Influence on Traffic Routing</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Mobility-Event-Notifications"><span class="nav-text">Mobility Event Notifications</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Concurrent-Access-to-Local-and-Central-DN"><span class="nav-text">Concurrent Access to Local and Central DN</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Reference"><span class="nav-text">Reference</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Steven Chiu"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Steven Chiu</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">13</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/stevenchiu30801" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;stevenchiu30801" rel="noopener" target="_blank"><i class="fab fa-2x fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:steven30801@gmail.com" title="E-Mail → mailto:steven30801@gmail.com" rel="noopener" target="_blank"><i class="fa fa-2x fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.linkedin.com/in/yi-sung-chiu-b78806149" title="LinkedIn → https:&#x2F;&#x2F;www.linkedin.com&#x2F;in&#x2F;yi-sung-chiu-b78806149" rel="noopener" target="_blank"><i class="fab fa-2x fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.slideshare.net/YiSungChiu" title="SpeakerDeck → https:&#x2F;&#x2F;www.slideshare.net&#x2F;YiSungChiu" rel="noopener" target="_blank"><i class="fab fa-2x fa-slideshare fa-fw"></i></a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Steven Chiu</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

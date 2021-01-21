@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="zh-tw">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"stevenchiu30801.github.io","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="I often encounter invalid checksum issues in containerized deployment. This post records several root causes and solutions of such issues from other developers.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Invalid Checksum Issues">
+<meta property="og:url" content="https://stevenchiu30801.github.io/2020/03/04/Invalid-Checksum-Issues/index.html">
+<meta property="og:site_name" content="Steven&#39;s Blog">
+<meta property="og:description" content="I often encounter invalid checksum issues in containerized deployment. This post records several root causes and solutions of such issues from other developers.">
+<meta property="og:locale" content="zh_TW">
+<meta property="og:image" content="https://stevenchiu30801.github.io/images/invalid-checksum-issues/case2.png">
+<meta property="og:image" content="https://stevenchiu30801.github.io/images/invalid-checksum-issues/case3.png">
+<meta property="article:published_time" content="2020-03-04T11:14:59.000Z">
+<meta property="article:modified_time" content="2021-01-12T12:05:16.309Z">
+<meta property="article:author" content="Steven Chiu">
+<meta property="article:tag" content="Debug">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://stevenchiu30801.github.io/images/invalid-checksum-issues/case2.png">
+
+<link rel="canonical" href="https://stevenchiu30801.github.io/2020/03/04/Invalid-Checksum-Issues/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-tw'
+  };
+</script>
+
+  <title>Invalid Checksum Issues | Steven's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Steven's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-project">
+
+    <a href="/project/" rel="section"><i class="fa fa-code fa-fw"></i>project</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-tw">
+    <link itemprop="mainEntityOfPage" href="https://stevenchiu30801.github.io/2020/03/04/Invalid-Checksum-Issues/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Steven Chiu">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Steven's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Invalid Checksum Issues
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-03-04 19:14:59" itemprop="dateCreated datePublished" datetime="2020-03-04T19:14:59+08:00">2020-03-04</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-01-12 20:05:16" itemprop="dateModified" datetime="2021-01-12T20:05:16+08:00">2021-01-12</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>I often encounter invalid checksum issues in containerized deployment. This post records several root causes and solutions of such issues from other developers. <a id="more"></a></p>
+<h1 id="Possibly-Common-Root-Causes"><a href="#Possibly-Common-Root-Causes" class="headerlink" title="Possibly Common Root Causes"></a>Possibly Common Root Causes</h1><ul>
+<li>Packets get corrupted</li>
+<li>veth bugs in containerized environment</li>
+</ul>
+<p>or</p>
+<ul>
+<li>Tx/Rx offloading on NIC is enabled (which means you trust hardware/NIC would do something for you, and thus the software/OS would not take care of those)</li>
+<li>Checksum is not recalculated by NICs</li>
+</ul>
+<p>Then the destination gets the wrong packets</p>
+<hr>
+<h1 id="Case-1-Linux-kernel-bug-delivers-corrupt-TCP-IP-data-to-Mesos-Kubernetes-Docker-containers"><a href="#Case-1-Linux-kernel-bug-delivers-corrupt-TCP-IP-data-to-Mesos-Kubernetes-Docker-containers" class="headerlink" title="Case 1 - Linux kernel bug delivers corrupt TCP/IP data to Mesos, Kubernetes, Docker containers"></a>Case 1 - <a href="https://tech.vijayp.ca/linux-kernel-bug-delivers-corrupt-tcp-ip-data-to-mesos-kubernetes-docker-containers-4986f88f7a19" target="_blank" rel="noopener">Linux kernel bug delivers corrupt TCP/IP data to Mesos, Kubernetes, Docker containers</a></h1><h2 id="Incident"><a href="#Incident" class="headerlink" title="Incident"></a>Incident</h2><p>Applications of Twitter in containers received packets with wrong checksum</p>
+<p>Disabling Rx checksum offloading on veth device would fix the problem</p>
+<h2 id="Root-Cause"><a href="#Root-Cause" class="headerlink" title="Root Cause"></a>Root Cause</h2><ul>
+<li>10% of packets could be corrupted on the wire</li>
+<li>Bugs on veth Kernel module</li>
+</ul>
+<p>Quote the blog:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">In the kernel, packets that arrive from real hardware devices have ip_summed set to CHECKSUM_UNNECESSARY if the hardware verified the checksums, or CHECKSUM_NONE if the packet is bad or it was unable to verify it.</span><br><span class="line"></span><br><span class="line">Code in veth.c replaced CHECKSUM_NONE with CHECKSUM_UNNECESSARY — this resulted in checksums that should have been verified and rejected by software to be silently ignored.</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h1 id="Case-2-OVS-DPDK-Docker-共同玩耍"><a href="#Case-2-OVS-DPDK-Docker-共同玩耍" class="headerlink" title="Case 2 - OVS + DPDK + Docker 共同玩耍"></a>Case 2 - <a href="https://www.hwchiu.com/ovs-dpdk-docker.html" target="_blank" rel="noopener">OVS + DPDK + Docker 共同玩耍</a></h1><p><a href="https://hwchiu.com/ovs-dpdk-docker.html" target="_blank" rel="noopener">Part 1</a></p>
+<p><a href="https://hwchiu.com/ovs-dpdk-docker-2.html" target="_blank" rel="noopener">Part 2</a></p>
+<h2 id="Incident-1"><a href="#Incident-1" class="headerlink" title="Incident"></a>Incident</h2><img src="/images/invalid-checksum-issues/case2.png" class="">
+
+<p>The OvS on Linux host (say Host 1) is applied with DPDK, which is an userspace datapath</p>
+<p>Each nodes could reach others using <code>ping</code> (ICMP)</p>
+<p>However, TCP packets from Container 1 could not reach both Container 2 and outside host (say Host 2)</p>
+<p>The checksum in TCP packets was found corrupted</p>
+<ul>
+<li>If disabled DPDK, everything works</li>
+<li>If disabled Tx/Rx Offloading on Container 1, everything works</li>
+</ul>
+<h2 id="Root-Cause-1"><a href="#Root-Cause-1" class="headerlink" title="Root Cause"></a>Root Cause</h2><p>The root cause is depicted in Case 3, which has the same scenario</p>
+<p>Actually, there are some conflicts between the discovered root cause of Case 2 and 3</p>
+<hr>
+<h1 id="Case-3-OVS-Deep-Dive-5-Datapath-and-TX-Offloading"><a href="#Case-3-OVS-Deep-Dive-5-Datapath-and-TX-Offloading" class="headerlink" title="Case 3 - OVS Deep Dive 5: Datapath and TX Offloading"></a>Case 3 - <a href="https://arthurchiao.github.io/blog/ovs-deep-dive-5-datapath-tx-offloading/?fbclid=IwAR13kbYeRqMa3_VwWB4lRsCgPjr4aP6Z1TvGz2z4TluS3hZ-M2A-ht1NdpY" target="_blank" rel="noopener">OVS Deep Dive 5: Datapath and TX Offloading</a></h1><h2 id="Incident-2"><a href="#Incident-2" class="headerlink" title="Incident"></a>Incident</h2><img src="/images/invalid-checksum-issues/case3.png" class="" width="600">
+
+<p>TCP Packets could not be transmitted between Instance A and B</p>
+<h2 id="Root-Cause-2"><a href="#Root-Cause-2" class="headerlink" title="Root Cause"></a>Root Cause</h2><p>Quote the blog:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">When TX offload is enabled on instance’s tap devices (default setting), OVS will utilize physical NICs for checksum calculating for each packet sent out from instance, and this is handled by the kernel module openvswitch.ko.</span><br><span class="line"></span><br><span class="line">A problem occurs when TX offloading is enabled while OVS bridge uses Userspace Datapath: Userspace Datapath does not support TX offloading.</span><br><span class="line"></span><br><span class="line">... A enables TCP TX offloading, so the packet is sent to OVS with faked TCP checksum; while OVS with Userspace Datapath does not do TCP checksum, the packet is sent out (or forwarded to B) with wrong checksum; ...</span><br><span class="line"></span><br><span class="line">In summary, if deploy OVS with DPDK enabled, you have to turn off TX offload flags in your instances. In this case, instances themselves will take care of the checksum calculating.</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Debug/" rel="tag"># Debug</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/02/18/%E6%88%90%E5%8A%9F%EF%BC%8C%E5%BE%9E%E8%81%9A%E7%84%A6%E4%B8%80%E4%BB%B6%E4%BA%8B%E9%96%8B%E5%A7%8B/" rel="prev" title="成功，從聚焦一件事開始">
+      <i class="fa fa-chevron-left"></i> 成功，從聚焦一件事開始
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/04/25/%E8%80%B6%E9%AD%AF%E6%9C%80%E5%8F%97%E6%AD%A1%E8%BF%8E%E7%9A%84%E9%87%91%E8%9E%8D%E9%80%9A%E8%AD%98%E8%AA%B2/" rel="next" title="耶魯最受歡迎的金融通識課">
+      耶魯最受歡迎的金融通識課 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Possibly-Common-Root-Causes"><span class="nav-text">Possibly Common Root Causes</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Case-1-Linux-kernel-bug-delivers-corrupt-TCP-IP-data-to-Mesos-Kubernetes-Docker-containers"><span class="nav-text">Case 1 - Linux kernel bug delivers corrupt TCP&#x2F;IP data to Mesos, Kubernetes, Docker containers</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Incident"><span class="nav-text">Incident</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Root-Cause"><span class="nav-text">Root Cause</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Case-2-OVS-DPDK-Docker-共同玩耍"><span class="nav-text">Case 2 - OVS + DPDK + Docker 共同玩耍</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Incident-1"><span class="nav-text">Incident</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Root-Cause-1"><span class="nav-text">Root Cause</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Case-3-OVS-Deep-Dive-5-Datapath-and-TX-Offloading"><span class="nav-text">Case 3 - OVS Deep Dive 5: Datapath and TX Offloading</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Incident-2"><span class="nav-text">Incident</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Root-Cause-2"><span class="nav-text">Root Cause</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Steven Chiu"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Steven Chiu</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">13</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/stevenchiu30801" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;stevenchiu30801" rel="noopener" target="_blank"><i class="fab fa-2x fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:steven30801@gmail.com" title="E-Mail → mailto:steven30801@gmail.com" rel="noopener" target="_blank"><i class="fa fa-2x fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.linkedin.com/in/yi-sung-chiu-b78806149" title="LinkedIn → https:&#x2F;&#x2F;www.linkedin.com&#x2F;in&#x2F;yi-sung-chiu-b78806149" rel="noopener" target="_blank"><i class="fab fa-2x fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.slideshare.net/YiSungChiu" title="SpeakerDeck → https:&#x2F;&#x2F;www.slideshare.net&#x2F;YiSungChiu" rel="noopener" target="_blank"><i class="fab fa-2x fa-slideshare fa-fw"></i></a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Steven Chiu</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

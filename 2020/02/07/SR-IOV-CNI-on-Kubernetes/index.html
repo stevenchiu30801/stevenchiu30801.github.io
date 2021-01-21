@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="zh-tw">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"stevenchiu30801.github.io","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="Single Root I&#x2F;O Virtualization (SR-IOV) is a acceleration technique in virtualized environment. This post is a setup guide for the use of SR-IOV CNI on Kubernetes.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SR-IOV CNI on Kubernetes">
+<meta property="og:url" content="https://stevenchiu30801.github.io/2020/02/07/SR-IOV-CNI-on-Kubernetes/index.html">
+<meta property="og:site_name" content="Steven&#39;s Blog">
+<meta property="og:description" content="Single Root I&#x2F;O Virtualization (SR-IOV) is a acceleration technique in virtualized environment. This post is a setup guide for the use of SR-IOV CNI on Kubernetes.">
+<meta property="og:locale" content="zh_TW">
+<meta property="article:published_time" content="2020-02-07T11:43:23.000Z">
+<meta property="article:modified_time" content="2021-01-12T12:05:16.313Z">
+<meta property="article:author" content="Steven Chiu">
+<meta property="article:tag" content="Kubernetes">
+<meta property="article:tag" content="CNI">
+<meta property="article:tag" content="SR-IOV">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://stevenchiu30801.github.io/2020/02/07/SR-IOV-CNI-on-Kubernetes/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-tw'
+  };
+</script>
+
+  <title>SR-IOV CNI on Kubernetes | Steven's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Steven's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-project">
+
+    <a href="/project/" rel="section"><i class="fa fa-code fa-fw"></i>project</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-tw">
+    <link itemprop="mainEntityOfPage" href="https://stevenchiu30801.github.io/2020/02/07/SR-IOV-CNI-on-Kubernetes/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Steven Chiu">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Steven's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          SR-IOV CNI on Kubernetes
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2020-02-07 19:43:23" itemprop="dateCreated datePublished" datetime="2020-02-07T19:43:23+08:00">2020-02-07</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-01-12 20:05:16" itemprop="dateModified" datetime="2021-01-12T20:05:16+08:00">2021-01-12</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>Single Root I/O Virtualization (SR-IOV) is a acceleration technique in virtualized environment. This post is a setup guide for the use of SR-IOV CNI on Kubernetes. <a id="more"></a></p>
+<h1 id="Comparison-with-DPDK"><a href="#Comparison-with-DPDK" class="headerlink" title="Comparison with DPDK"></a>Comparison with DPDK</h1><p>See <a href="https://www.telcocloudbridge.com/blog/dpdk-vs-sr-iov-for-nfv-why-a-wrong-decision-can-impact-performance/" target="_blank" rel="noopener">DPDK vs SR-IOV for NFV? – Why a wrong decision can impact performance!</a></p>
+<h1 id="Usage"><a href="#Usage" class="headerlink" title="Usage"></a>Usage</h1><p>Please refer to <a href="https://www.intel.com/content/www/us/en/embedded/products/networking/xl710-sr-iov-config-guide-gbe-linux-brief.html" target="_blank" rel="noopener">Intel - SR-IOV Configuration Guide</a> and <a href="https://github.com/intel/sriov-network-device-plugin" target="_blank" rel="noopener">GitHub - intel/sriov-network-device-plugin</a># workflow</p>
+<h2 id="SR-IOV-Configuration"><a href="#SR-IOV-Configuration" class="headerlink" title="SR-IOV Configuration"></a>SR-IOV Configuration</h2><ol>
+<li><p>Enable I/O Memory Management Unit (IOMMU) support</p>
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Enable IOMMU support for linux kernel</span></span><br><span class="line"><span class="comment"># Update Grub `GRUB_CMDLINE_LINUX` with `intel_iommu=on`</span></span><br><span class="line">$ cat /etc/default/grub</span><br><span class="line">...</span><br><span class="line">GRUB_CMDLINE_LINUX=<span class="string">"intel_iommu=on"</span></span><br><span class="line"></span><br><span class="line">$ sudo update-grub</span><br><span class="line">$ sudo reboot</span><br><span class="line"></span><br><span class="line"><span class="comment"># Check if IOMMU is correctly enabled</span></span><br><span class="line">$ dmesg | grep IOMMU</span><br><span class="line">[    0.000000] DMAR: IOMMU enabled</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>Load device’s kernel module</p>
+<p> For <a href="https://ark.intel.com/content/www/us/en/ark/products/59062/intel-ethernet-server-adapter-i350-t2.html" target="_blank" rel="noopener">Intel® Ethernet Server Adapter I350-T2</a>, VF driver is included in Ubuntu Xenial distribution</p>
+<p> One can simply load it</p>
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Check which driver is used by the adapter</span></span><br><span class="line">$ ethtool -i enp1s0f0</span><br><span class="line">driver: igb</span><br><span class="line">version: 5.4.0-k</span><br><span class="line"></span><br><span class="line">firmware-version: 1.67, 0x80000d6a, 15.0.27</span><br><span class="line">expansion-rom-version: </span><br><span class="line">bus-info: 0000:01:00.0</span><br><span class="line">supports-statistics: yes</span><br><span class="line">supports-test: yes</span><br><span class="line">supports-eeprom-access: yes</span><br><span class="line">supports-register-dump: yes</span><br><span class="line">supports-priv-flags: yes</span><br><span class="line"></span><br><span class="line"><span class="comment"># Check available driver, see https://unix.stackexchange.com/a/184880</span></span><br><span class="line">$ find /lib/modules/$(uname -r) -<span class="built_in">type</span> f -name <span class="string">'*.ko'</span> | grep igb</span><br><span class="line">/lib/modules/4.15.0-76-generic/kernel/drivers/net/ethernet/intel/igb/igb.ko</span><br><span class="line">/lib/modules/4.15.0-76-generic/kernel/drivers/net/ethernet/intel/igbvf/igbvf.ko</span><br><span class="line"></span><br><span class="line"><span class="comment"># Load kernel module, PF driver (igb) and VF driver (igbvf)</span></span><br><span class="line">$ modprobe igb</span><br><span class="line"><span class="comment"># It is not necessary to load VF driver,</span></span><br><span class="line"><span class="comment"># since it would be automatically loaded upon creating VFs later</span></span><br><span class="line">$ modprobe igbvf</span><br></pre></td></tr></table></figure>
+
+<p> If you want to use the latest driver, download, compile and then load it</p>
+</li>
+<li><p>Create VFs</p>
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Check maximum number of VFs supported by the adapter</span></span><br><span class="line">$ cat /sys/class/net/enp1s0f0/device/sriov_totalvfs</span><br><span class="line">7</span><br><span class="line"></span><br><span class="line"><span class="comment"># Create VFs to `sriov_numvfs`</span></span><br><span class="line">$ <span class="built_in">echo</span> 4 &gt; /sys/class/net/enp1s0f0/device/sriov_numvfs</span><br><span class="line"><span class="comment"># echo 4 | sudo tee /sys/class/net/enp1s0f0/device/sriov_numvfs</span></span><br></pre></td></tr></table></figure>
+
+<p> To ensure number of VFs are created each time the server is power-cycled (not verified)</p>
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Append the creating VFs command to `rc.local` file</span></span><br><span class="line">$ cat /etc/rc.local</span><br><span class="line"><span class="meta">#!/bin/bash</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> 4 &gt; /sys/class/net/&lt;device_name&gt;/device/sriov_numvfs</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>Confirm VFs are created</p>
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Confirm VFs are created</span></span><br><span class="line"><span class="comment"># Each PCI device is identified by a unique slot name ([domain:]bus:device.function)</span></span><br><span class="line"><span class="comment"># See http://manpages.ubuntu.com/manpages/trusty/man8/lspci.8.html for more information</span></span><br><span class="line">$ lspci | grep Ethernet</span><br><span class="line">01:00.0 Ethernet controller: Intel Corporation I350 Gigabit Network Connection (rev 01)</span><br><span class="line">01:00.1 Ethernet controller: Intel Corporation I350 Gigabit Network Connection (rev 01)</span><br><span class="line"><span class="comment"># The four devices below are created VFs</span></span><br><span class="line">02:10.0 Ethernet controller: Intel Corporation I350 Ethernet Controller Virtual Function (rev 01)</span><br><span class="line">02:10.4 Ethernet controller: Intel Corporation I350 Ethernet Controller Virtual Function (rev 01)</span><br><span class="line">02:11.0 Ethernet controller: Intel Corporation I350 Ethernet Controller Virtual Function (rev 01)</span><br><span class="line">02:11.4 Ethernet controller: Intel Corporation I350 Ethernet Controller Virtual Function (rev 01)</span><br><span class="line">05:00.0 Ethernet controller: Realtek Semiconductor Co., Ltd. RTL8111/8168/8411 PCI Express Gigabit Ethernet Controller (rev 15)</span><br><span class="line"></span><br><span class="line"><span class="comment"># Check VF MAC address assignment</span></span><br><span class="line">$ ip link show </span><br><span class="line">1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000</span><br><span class="line">    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00</span><br><span class="line">2: enp5s0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc fq state UP mode DEFAULT group default qlen 1000</span><br><span class="line">    link/ether 4c:ed:fb:cb:bc:28 brd ff:ff:ff:ff:ff:ff</span><br><span class="line">3: enp1s0f0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc mq state UP mode DEFAULT group default qlen 1000</span><br><span class="line">    link/ether a0:36:9f:39:be:32 brd ff:ff:ff:ff:ff:ff</span><br><span class="line">    vf 0 MAC 66:6e:2d:05:55:12, spoof checking on, link-state auto</span><br><span class="line">    vf 1 MAC 6a:8b:4a:98:64:7e, spoof checking on, link-state auto</span><br><span class="line">    vf 2 MAC 46:6b:c9:b5:dc:a8, spoof checking on, link-state auto</span><br><span class="line">    vf 3 MAC 96:12:1f:38:8b:78, spoof checking on, link-state auto</span><br><span class="line">4: enp1s0f1: &lt;NO-CARRIER,BROADCAST,MULTICAST,UP&gt; mtu 1500 qdisc mq state DOWN mode DEFAULT group default qlen 1000</span><br><span class="line">    link/ether a0:36:9f:39:be:33 brd ff:ff:ff:ff:ff:ff</span><br><span class="line">5: docker0: &lt;NO-CARRIER,BROADCAST,MULTICAST,UP&gt; mtu 1500 qdisc noqueue state DOWN mode DEFAULT group default </span><br><span class="line">    link/ether 02:42:8b:85:39:32 brd ff:ff:ff:ff:ff:ff</span><br><span class="line">6: enp2s16: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc fq state UP mode DEFAULT group default qlen 1000</span><br><span class="line">    link/ether 66:6e:2d:05:55:12 brd ff:ff:ff:ff:ff:ff</span><br><span class="line">7: enp2s16f4: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc fq state UP mode DEFAULT group default qlen 1000</span><br><span class="line">    link/ether 6a:8b:4a:98:64:7e brd ff:ff:ff:ff:ff:ff</span><br><span class="line">8: enp2s17: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc fq state UP mode DEFAULT group default qlen 1000</span><br><span class="line">    link/ether 46:6b:c9:b5:dc:a8 brd ff:ff:ff:ff:ff:ff</span><br><span class="line">9: enp2s17f4: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc fq state UP mode DEFAULT group default qlen 1000</span><br><span class="line">    link/ether 96:12:1f:38:8b:78 brd ff:ff:ff:ff:ff:ff</span><br></pre></td></tr></table></figure>
+
+</li>
+</ol>
+<h2 id="Additional-Information"><a href="#Additional-Information" class="headerlink" title="Additional Information"></a>Additional Information</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># List network hardware</span></span><br><span class="line">$ lshw -class network -businfo</span><br><span class="line">Bus info          Device           Class          Description</span><br><span class="line">=============================================================</span><br><span class="line">pci@0000:01:00.0  enp1s0f0         network        I350 Gigabit Network Connection</span><br><span class="line">pci@0000:01:00.1  enp1s0f1         network        I350 Gigabit Network Connection</span><br><span class="line">pci@0000:05:00.0  enp5s0           network        RTL8111/8168/8411 PCI Express Gigabit Ethernet Controller</span><br><span class="line">pci@0000:02:10.0  enp2s16          network        Illegal Vendor ID</span><br><span class="line">pci@0000:02:10.4  enp2s16f4        network        Illegal Vendor ID</span><br><span class="line">pci@0000:02:11.0  enp2s17          network        Illegal Vendor ID</span><br><span class="line">pci@0000:02:11.4  enp2s17f4        network        Illegal Vendor ID</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Display PCI device in verbose format using slot name</span></span><br><span class="line">$ lspci -vmm -s 01:00.0</span><br><span class="line">Slot:   01:00.0</span><br><span class="line">Class:  Ethernet controller</span><br><span class="line">Vendor: Intel Corporation</span><br><span class="line">Device: I350 Gigabit Network Connection</span><br><span class="line">SVendor:        Intel Corporation</span><br><span class="line">SDevice:        Ethernet Server Adapter I350-T2</span><br><span class="line">Rev:    01</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># A list of all known PCI ID's (vendors, devices, classes and subclasses)</span></span><br><span class="line">$ cat /usr/share/misc/pci.ids | grep <span class="string">"Intel Corporation"</span></span><br><span class="line">8086  Intel Corporation</span><br><span class="line"></span><br><span class="line">$ cat /usr/share/misc/pci.ids | grep <span class="string">"I350 Gigabit Network Connection"</span></span><br><span class="line">        1521  I350 Gigabit Network Connection</span><br><span class="line"></span><br><span class="line"><span class="comment"># Display PCI device in verbose format using vendor and device ID</span></span><br><span class="line">$ lspci -vmm -d 8086:1521</span><br><span class="line">Slot:   01:00.0</span><br><span class="line">Class:  Ethernet controller</span><br><span class="line">Vendor: Intel Corporation</span><br><span class="line">Device: I350 Gigabit Network Connection</span><br><span class="line">SVendor:        Intel Corporation</span><br><span class="line">SDevice:        Ethernet Server Adapter I350-T2</span><br><span class="line">Rev:    01</span><br><span class="line"></span><br><span class="line">Slot:   01:00.1</span><br><span class="line">Class:  Ethernet controller</span><br><span class="line">Vendor: Intel Corporation</span><br><span class="line">Device: I350 Gigabit Network Connection</span><br><span class="line">SVendor:        Intel Corporation</span><br><span class="line">SDevice:        Ethernet Server Adapter I350-T2</span><br><span class="line">Rev:    01</span><br></pre></td></tr></table></figure>
+
+<h2 id="Work-with-Kubernetes"><a href="#Work-with-Kubernetes" class="headerlink" title="Work with Kubernetes"></a>Work with Kubernetes</h2><p>Please refer to <a href="https://github.com/intel/sriov-network-device-plugin" target="_blank" rel="noopener">GitHub - intel/sriov-network-device-plugin</a>#Quick Start</p>
+<ol>
+<li><p>Build SR-IOV CNI</p>
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ git <span class="built_in">clone</span> https://github.com/intel/sriov-cni.git</span><br><span class="line">$ <span class="built_in">cd</span> sriov-cni</span><br><span class="line">$ make</span><br><span class="line">$ cp build/sriov /opt/cni/bin</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>Build and run SR-IOV network device plugin</p>
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ git <span class="built_in">clone</span> https://github.com/intel/sriov-network-device-plugin.git</span><br><span class="line">$ <span class="built_in">cd</span> sriov-network-device-plugin</span><br><span class="line">$ make</span><br><span class="line">$ make image</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>Create a ConfigMap that defines SR-IOV resrouce pool configuration</p>
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># `vendors` and `devices` in `selectors` have not verified yet</span></span><br><span class="line"><span class="comment"># See https://github.com/intel/sriov-network-device-plugin#configurations</span></span><br><span class="line">$ cat deployment/configMap.yaml</span><br><span class="line">apiVersion: v1</span><br><span class="line">kind: ConfigMap</span><br><span class="line">metadata:</span><br><span class="line">  name: sriovdp-config</span><br><span class="line">  namespace: kube-system</span><br><span class="line">data:</span><br><span class="line">  config.json: |</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="string">"resourceList"</span>: [&#123;</span><br><span class="line">                <span class="string">"resourceName"</span>: <span class="string">"intel_sriov"</span>,</span><br><span class="line">                <span class="string">"selectors"</span>: &#123;</span><br><span class="line">                    <span class="string">"vendors"</span>: [<span class="string">"8086"</span>],</span><br><span class="line">                    <span class="string">"devices"</span>: [<span class="string">"1521"</span>],</span><br><span class="line">                    <span class="string">"pfName"</span>: [<span class="string">"enp1s0f0"</span>]</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        ]</span><br><span class="line">    &#125;</span><br><span class="line">$ kubectl create -f deployments/configMap.yaml</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>Deploy SRIOV network device plugin Daemonset</p>
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ kubectl create -f deployments/k8s-v1.16/sriovdp-daemonset.yaml</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>Check the allocatable resource for the node</p>
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">$ kubectl get node &lt;node&gt; -o json | jq <span class="string">'.status.allocatable'</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="string">"cpu"</span>: <span class="string">"6"</span>,</span><br><span class="line">  <span class="string">"ephemeral-storage"</span>: <span class="string">"424282646236"</span>,</span><br><span class="line">  <span class="string">"hugepages-1Gi"</span>: <span class="string">"0"</span>,</span><br><span class="line">  <span class="string">"hugepages-2Mi"</span>: <span class="string">"0"</span>,</span><br><span class="line">  <span class="string">"intel.com/intel_sriov"</span>: <span class="string">"5"</span>,</span><br><span class="line">  <span class="string">"memory"</span>: <span class="string">"32676196Ki"</span>,</span><br><span class="line">  <span class="string">"pods"</span>: <span class="string">"110"</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>Install one compatible CNI meta plugin, which is Multus here</p>
+</li>
+<li><p>Create the SRIOV Network CRD</p>
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">$ cat deployments/sriov-crd.yaml</span><br><span class="line">apiVersion: <span class="string">"k8s.cni.cncf.io/v1"</span></span><br><span class="line">kind: NetworkAttachmentDefinition</span><br><span class="line">metadata:</span><br><span class="line">  name: sriov-net1</span><br><span class="line">  annotations:</span><br><span class="line">    k8s.v1.cni.cncf.io/resourceName: intel.com/intel_sriov</span><br><span class="line">spec:</span><br><span class="line">  config: <span class="string">'&#123;</span></span><br><span class="line"><span class="string">  "type": "sriov",</span></span><br><span class="line"><span class="string">  "cniVersion": "0.3.1",</span></span><br><span class="line"><span class="string">  "name": "sriov-network",</span></span><br><span class="line"><span class="string">  "ipam": &#123;</span></span><br><span class="line"><span class="string">    "type": "host-local",</span></span><br><span class="line"><span class="string">    "subnet": "192.168.3.0/24"</span></span><br><span class="line"><span class="string">  &#125;,</span></span><br><span class="line"><span class="string">  "args": &#123;</span></span><br><span class="line"><span class="string">    "cni": &#123;</span></span><br><span class="line"><span class="string">      "ips": ["192.168.3.10"]</span></span><br><span class="line"><span class="string">    &#125;</span></span><br><span class="line"><span class="string">  &#125;</span></span><br><span class="line"><span class="string">&#125;'</span></span><br><span class="line">$ kubectl create -f deployments/sriov-crd.yaml</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>Create deployment/pod using the SR-IOV interface</p>
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">$ cat deployment.yaml</span><br><span class="line">apiVersion: apps/v1</span><br><span class="line">kind: Deployment</span><br><span class="line">metadata:</span><br><span class="line">  name: <span class="built_in">test</span>-deployment</span><br><span class="line">  labels:</span><br><span class="line">    app: <span class="built_in">test</span></span><br><span class="line">spec:</span><br><span class="line">  replicas: 1</span><br><span class="line">  selector:</span><br><span class="line">    matchLabels:</span><br><span class="line">      app: <span class="built_in">test</span></span><br><span class="line">  template:</span><br><span class="line">    metadata:</span><br><span class="line">      labels:</span><br><span class="line">        app: <span class="built_in">test</span></span><br><span class="line">      annotations:</span><br><span class="line">        k8s.v1.cni.cncf.io/networks: sriov-net1</span><br><span class="line">    spec:</span><br><span class="line">      containers:</span><br><span class="line">        - name: <span class="built_in">test</span></span><br><span class="line">          image: ubuntu:16.04</span><br><span class="line">          imagePullPolicy: IfNotPresent</span><br><span class="line">          <span class="built_in">command</span>: [<span class="string">"/bin/bash"</span>]</span><br><span class="line">          stdin: <span class="literal">true</span></span><br><span class="line">          tty: <span class="literal">true</span></span><br><span class="line">          resources:</span><br><span class="line">            requests:</span><br><span class="line">              intel.com/intel_sriov: <span class="string">'1'</span> </span><br><span class="line">            limits:</span><br><span class="line">              intel.com/intel_sriov: <span class="string">'1'</span></span><br><span class="line">$ kubectl apply -f deployment.yaml</span><br></pre></td></tr></table></figure>
+
+</li>
+</ol>
+<h1 id="Troubleshooting"><a href="#Troubleshooting" class="headerlink" title="Troubleshooting"></a>Troubleshooting</h1><h2 id="Cannot-Configure-VFs"><a href="#Cannot-Configure-VFs" class="headerlink" title="Cannot Configure VFs"></a>Cannot Configure VFs</h2><h3 id="Problem"><a href="#Problem" class="headerlink" title="Problem"></a>Problem</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="built_in">echo</span> 4 &gt; /sys/class/net/enp2s0f1/device/sriov_numvfs</span><br><span class="line">-bash: <span class="built_in">echo</span>: write error: Cannot allocate memory</span><br><span class="line"></span><br><span class="line">$ dmesg</span><br><span class="line">... can<span class="string">'t enable 4 VFs (bus 02 out of range of [bus 01])</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="Solution"><a href="#Solution" class="headerlink" title="Solution"></a>Solution</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Add `pci=assign-busses` to Grub</span></span><br><span class="line">$ cat /etc/default/grub</span><br><span class="line">...</span><br><span class="line">GRUB_CMDLINE_LINUX=<span class="string">"intel_iommu=on pci=assign-busses"</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># Update Grub and reboot</span></span><br><span class="line">$ sudo update-grub</span><br><span class="line">$ sudo reboot</span><br></pre></td></tr></table></figure>
+
+<p>Also see</p>
+<ul>
+<li><a href="https://bugzilla.redhat.com/show_bug.cgi?id=1223376" target="_blank" rel="noopener">Bug 1223376 - not enough MMIO resources for SR-IOV</a></li>
+<li><a href="https://patchwork.ozlabs.org/patch/30000/#73079" target="_blank" rel="noopener">SRIOV fails with “SR-IOV: bus number out of range”</a></li>
+<li><a href="https://www.sdnlab.com/community/question/dpdk/397" target="_blank" rel="noopener">创建vf报错，问题求助</a></li>
+</ul>
+<h1 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h1><ul>
+<li><a href="https://github.com/intel/sriov-network-device-plugin" target="_blank" rel="noopener">GitHub - intel/sriov-network-device-plugin</a></li>
+<li><a href="https://www.intel.com/content/www/us/en/embedded/products/networking/xl710-sr-iov-config-guide-gbe-linux-brief.html" target="_blank" rel="noopener">Intel - SR-IOV Configuration Guide</a></li>
+<li><a href="http://gitlab.com/nctuwinlab/0556186-kubefree5GC/kube-free5gc-installer/blob/master/notes/NCTU-new/kubecordA.md" target="_blank" rel="noopener">gitlab.com/nctuwinlab/0556186-kubefree5GC/kube-free5gc-installer/blob/master/notes/NCTU-new/kubecordA.md</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Kubernetes/" rel="tag"># Kubernetes</a>
+              <a href="/tags/CNI/" rel="tag"># CNI</a>
+              <a href="/tags/SR-IOV/" rel="tag"># SR-IOV</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/05/26/ONOS-with-Segment-Routing/" rel="prev" title="ONOS with Segment Routing">
+      <i class="fa fa-chevron-left"></i> ONOS with Segment Routing
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/02/18/%E6%88%90%E5%8A%9F%EF%BC%8C%E5%BE%9E%E8%81%9A%E7%84%A6%E4%B8%80%E4%BB%B6%E4%BA%8B%E9%96%8B%E5%A7%8B/" rel="next" title="成功，從聚焦一件事開始">
+      成功，從聚焦一件事開始 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Comparison-with-DPDK"><span class="nav-text">Comparison with DPDK</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Usage"><span class="nav-text">Usage</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#SR-IOV-Configuration"><span class="nav-text">SR-IOV Configuration</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Additional-Information"><span class="nav-text">Additional Information</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Work-with-Kubernetes"><span class="nav-text">Work with Kubernetes</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Troubleshooting"><span class="nav-text">Troubleshooting</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Cannot-Configure-VFs"><span class="nav-text">Cannot Configure VFs</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Problem"><span class="nav-text">Problem</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Solution"><span class="nav-text">Solution</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Reference"><span class="nav-text">Reference</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Steven Chiu"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Steven Chiu</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">13</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/stevenchiu30801" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;stevenchiu30801" rel="noopener" target="_blank"><i class="fab fa-2x fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:steven30801@gmail.com" title="E-Mail → mailto:steven30801@gmail.com" rel="noopener" target="_blank"><i class="fa fa-2x fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.linkedin.com/in/yi-sung-chiu-b78806149" title="LinkedIn → https:&#x2F;&#x2F;www.linkedin.com&#x2F;in&#x2F;yi-sung-chiu-b78806149" rel="noopener" target="_blank"><i class="fab fa-2x fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.slideshare.net/YiSungChiu" title="SpeakerDeck → https:&#x2F;&#x2F;www.slideshare.net&#x2F;YiSungChiu" rel="noopener" target="_blank"><i class="fab fa-2x fa-slideshare fa-fw"></i></a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Steven Chiu</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
